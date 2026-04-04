@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "composite": false,
+    "types": ["jest"],
+    "resolveJsonModule": true
+  },
+  "include": ["__tests__", "fixtures"]
+}

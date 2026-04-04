@@ -1,0 +1,30 @@
+{
+  "name": "@vision-core/adapter-web",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "jest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vision-core/types": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "*",
+    "jest": "*",
+    "jest-canvas-mock": "*",
+    "ts-jest": "*",
+    "tsup": "*",
+    "typescript": "*"
+  }
+}

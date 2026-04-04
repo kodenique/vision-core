@@ -1,0 +1,23 @@
+{
+  "name": "@vision-core/integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'integration-tests: no build step'",
+    "test": "jest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vision-core/adapter-web": "*",
+    "@vision-core/core": "*",
+    "@vision-core/engine-onnx": "*",
+    "@vision-core/types": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "*",
+    "jest": "*",
+    "jest-canvas-mock": "*",
+    "ts-jest": "*",
+    "typescript": "*"
+  }
+}
