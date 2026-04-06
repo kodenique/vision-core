@@ -1,6 +1,9 @@
-import type { ImageSize } from './model.js';
-import type { TensorInput } from './tensor.js';
-
-export interface ImageAdapter<TInput> {
-  preprocess(input: TInput, targetSize: ImageSize): Promise<TensorInput>;
-}
+/**
+ * Raw RGBA pixel data received from the frontend.
+ * The backend decodes the image (e.g. via sharp) and passes this to VisionCore.
+ */
+export type ImageInput = {
+  data: Uint8Array; // RGBA pixel data (4 bytes per pixel)
+  width: number;
+  height: number;
+};

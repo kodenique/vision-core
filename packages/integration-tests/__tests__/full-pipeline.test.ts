@@ -1,7 +1,7 @@
 import { createVisionCore, EngineNotInitializedError } from '@vision-core/core';
 import { createOnnxEngine } from '@vision-core/engine-onnx';
 import type { OnnxRuntime, OnnxInferenceSession, OnnxTensor } from '@vision-core/engine-onnx';
-import type { ImageAdapter, ImageSize, ModelConfig, TensorInput } from '@vision-core/types';
+import type { ImageInput, ModelConfig } from '@vision-core/types';
 import goldenFixture from '../fixtures/golden-4x4-rgb.json';
 
 // --- Mock OnnxRuntime ---
@@ -26,16 +26,6 @@ function makeMockOnnxRuntime(outputTensorName = 'output'): OnnxRuntime {
   };
 }
 
-// --- Stub ImageAdapter (no browser APIs needed) ---
-
-class StubImageAdapter implements ImageAdapter<Float32Array> {
-  async preprocess(input: Float32Array, targetSize: ImageSize): Promise<TensorInput> {
-    const { width, height } = targetSize;
-    const shape = [1, 3, height, width];
-    return { data: input, shape };
-  }
-}
-
 // --- Model Config ---
 
 const modelConfig: ModelConfig = {
@@ -43,12 +33,22 @@ const modelConfig: ModelConfig = {
   modelLoader: async () => new ArrayBuffer(16),
   inputTensorName: 'input',
   outputTensorName: 'output',
-  inputWidth: 224,
-  inputHeight: 224,
+  inputWidth: 4,
+  inputHeight: 4,
   channels: 3,
   channelOrder: 'CHW',
   normalization: { mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225] },
 };
+
+// --- Helper: create a mock RGBA image ---
+
+function createMockImage(width: number, height: number, fillValue = 128): ImageInput {
+  return {
+    data: new Uint8Array(width * height * 4).fill(fillValue),
+    width,
+    height,
+  };
+}
 
 // --- Helper: inline normalization (matches normalizePixels CHW logic) ---
 
@@ -70,17 +70,16 @@ function normalizePixelsCHW(
 // -------------------------------------------------------------------
 
 describe('Full pipeline integration', () => {
-  describe('VisionCore with OnnxEmbeddingEngine + StubAdapter', () => {
+  describe('VisionCore with OnnxEmbeddingEngine (backend-only)', () => {
     it('initialize -> embed -> dispose returns correct EmbeddingResult', async () => {
       const runtime = makeMockOnnxRuntime();
       const engine = createOnnxEngine(runtime);
-      const adapter = new StubImageAdapter();
-      const vc = createVisionCore(engine, adapter);
+      const vc = createVisionCore(engine);
 
       await vc.initialize(modelConfig);
 
-      const inputTensor = new Float32Array(3 * 224 * 224).fill(0.1);
-      const result = await vc.embed(inputTensor);
+      const image = createMockImage(4, 4);
+      const result = await vc.embed(image);
 
       expect(result.embedding).toBeInstanceOf(Float32Array);
       expect(result.dimensions).toBe(MOCK_EMBEDDING_SIZE);
@@ -93,11 +92,10 @@ describe('Full pipeline integration', () => {
     it('embed returns predictable embedding values from mock runtime', async () => {
       const runtime = makeMockOnnxRuntime();
       const engine = createOnnxEngine(runtime);
-      const adapter = new StubImageAdapter();
-      const vc = createVisionCore(engine, adapter);
+      const vc = createVisionCore(engine);
 
       await vc.initialize(modelConfig);
-      const result = await vc.embed(new Float32Array(10));
+      const result = await vc.embed(createMockImage(4, 4));
 
       for (let i = 0; i < result.embedding.length; i++) {
         expect(result.embedding[i]).toBeCloseTo(0.5, 5);
@@ -107,19 +105,19 @@ describe('Full pipeline integration', () => {
     });
 
     it('throws EngineNotInitializedError when embed called before initialize', async () => {
-      const vc = createVisionCore(createOnnxEngine(makeMockOnnxRuntime()), new StubImageAdapter());
-      await expect(vc.embed(new Float32Array(10))).rejects.toThrow(EngineNotInitializedError);
+      const vc = createVisionCore(createOnnxEngine(makeMockOnnxRuntime()));
+      await expect(vc.embed(createMockImage(4, 4))).rejects.toThrow(EngineNotInitializedError);
     });
 
     it('dispose resets state and prevents further embedding', async () => {
       const runtime = makeMockOnnxRuntime();
       const engine = createOnnxEngine(runtime);
-      const vc = createVisionCore(engine, new StubImageAdapter());
+      const vc = createVisionCore(engine);
 
       await vc.initialize(modelConfig);
       await vc.dispose();
 
-      await expect(vc.embed(new Float32Array(10))).rejects.toThrow(EngineNotInitializedError);
+      await expect(vc.embed(createMockImage(4, 4))).rejects.toThrow(EngineNotInitializedError);
     });
   });
 

@@ -1,43 +1,35 @@
 import type {
   EmbeddingEngine,
-  ImageAdapter,
+  ImageInput,
   ModelConfig,
   EmbeddingResult,
 } from '@vision-core/types';
 import {
   EngineNotInitializedError,
   InferenceError,
-  AdapterError,
 } from './errors.js';
+import { preprocessImage } from './preprocessing.js';
 
-export class VisionCore<TInput = unknown> {
+export class VisionCore {
   private initialized = false;
+  private config: ModelConfig | null = null;
 
   constructor(
-    private readonly engine: EmbeddingEngine,
-    private readonly adapter: ImageAdapter<TInput>
+    private readonly engine: EmbeddingEngine
   ) {}
 
   async initialize(config: ModelConfig): Promise<void> {
     await this.engine.loadModel(config);
+    this.config = config;
     this.initialized = true;
   }
 
-  async embed(imageInput: TInput): Promise<EmbeddingResult> {
+  async embed(image: ImageInput): Promise<EmbeddingResult> {
     if (!this.initialized) {
       throw new EngineNotInitializedError();
     }
 
-    const targetSize = { width: 0, height: 0 }; // resolved via config in real use
-    let tensorInput;
-    try {
-      tensorInput = await this.adapter.preprocess(imageInput, targetSize);
-    } catch (err) {
-      throw new AdapterError(
-        `Adapter preprocessing failed: ${err instanceof Error ? err.message : String(err)}`,
-        err
-      );
-    }
+    const tensorInput = preprocessImage(image, this.config!);
 
     let result;
     try {
