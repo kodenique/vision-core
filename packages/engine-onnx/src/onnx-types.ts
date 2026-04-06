@@ -12,4 +12,7 @@ export interface OnnxRuntime {
   InferenceSession: {
     create(data: ArrayBuffer, options?: unknown): Promise<OnnxInferenceSession>;
   };
+  Tensor: {
+    new (type: string, data: Float32Array | number[], dims: number[]): OnnxTensor;
+  };
 }

@@ -4,3 +4,4 @@ export type { ModelConfig, ImageSize } from './model.js';
 export type { EmbeddingResult } from './result.js';
 export type { TensorInput } from './tensor.js';
 export { l2Normalize } from './normalize.js';
+export type { BoundingBox, Detection, DetectionResult, DetectionModelConfig, DetectionEngine } from './detection.js';

@@ -18,8 +18,9 @@ export class OnnxEmbeddingEngine implements EmbeddingEngine {
       throw new Error('Model not loaded. Call loadModel() first.');
     }
 
+    const tensor = new this.runtime.Tensor('float32', input.data, input.shape);
     const feeds: Record<string, { data: Float32Array | number[]; dims: number[] }> = {
-      [this.config.inputTensorName]: { data: input.data, dims: input.shape },
+      [this.config.inputTensorName]: tensor,
     };
 
     const results = await this.session.run(feeds);
